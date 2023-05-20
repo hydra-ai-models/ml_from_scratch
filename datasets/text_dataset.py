@@ -9,9 +9,11 @@ from typing import Optional, Type
 import os
 
 class TextDataset(Dataset):
-    def __init__(self, max_block_size: int, tokenizer: Type[BaseTokenizer], filename: Optional[str] = '', document: Optional[str] = '') -> None:
+    def __init__(self, max_block_size: int, tokenizer: Type[BaseTokenizer], split_name: str, train_fraction: float, filename: Optional[str] = '', document: Optional[str] = '') -> None:
         self._max_block_size = max_block_size
         self._tokenizer = tokenizer
+        self.split_name = split_name
+        self.train_fraction = train_fraction
         self._filename = filename
         self._document = document
 
@@ -23,9 +25,14 @@ class TextDataset(Dataset):
 
         if len(filename):
             with open(filename, 'r') as reader:
-                self._data = reader.read()
+                text_data = reader.read()
         else:
-            self._data = document
+            text_data = document
+
+        if split_name == 'train':
+            self._data = text_data[:int(len(text_data) * train_fraction)]
+        else:
+            self._data = text_data[int(len(text_data) * train_fraction):]
 
     def __len__(self) -> int:
         return len(self._data) - self._max_block_size
@@ -35,22 +42,3 @@ class TextDataset(Dataset):
         # and then separate this tokenized block into input and output.
         tokenized_block = self._tokenizer.encode(self._data[idx: idx + self._max_block_size + 1])
         return {'features': Tensor(tokenized_block[:-1]), 'labels': Tensor(tokenized_block[1:])}
-
-def read_dataset(filename: str, visualize: bool = False) -> str:
-    ''' Read a text file and return the contents as a string.
-
-        Args:
-            filename - Path of the text file to be read.
-            visualize - Whether to visualize the statistics of the file contents.
-
-        Returns
-            Content of the file as a string.
-    '''
-    with open(filename, 'r') as reader:
-        data = reader.read()
-
-    if visualize:
-        print(f'Visualizing dataset at path {filename}.')
-        print(f'First 100 characters:\n{data[0:100]}.')
-        print(f'Length: {len(data)}.')
-    return data

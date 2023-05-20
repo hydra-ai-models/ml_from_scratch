@@ -35,7 +35,7 @@ class CharTokenizerTester(unittest.TestCase):
 
     def generate_items_and_test(self, indices_to_test: list[int], document: str, tokenizer: Type[BaseTokenizer]):
         max_block_size = 8
-        dataset = TextDataset(max_block_size = max_block_size, tokenizer = tokenizer, document = document)
+        dataset = TextDataset(max_block_size = max_block_size, tokenizer = tokenizer, split_name = 'train', train_fraction = 1, document = document)
 
         for index in indices_to_test:
             actual_item = dataset.__getitem__(index)
