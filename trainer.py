@@ -1,164 +1,140 @@
 # Python script to train CharGPT models.
 
-class BigramLanguageModel(nn.Module):
-    '''
-        Simple Bigram language model which learns an embedding to predict the next token based on
-        the current character.
-    '''
-    def __init__(self, vocabulary_size: int):
-        super().__init__()
-        # Embedding layer which predicts the logits of the next character as the embedding vector of the current character.
-        self.embedding = nn.Embedding(vocabulary_size, vocabulary_size)
-        
-    def forward(self, x):
-        return self.embedding(x)
-    
-    def generate(self, initial_tokens, num_tokens_to_generate: int):
-        '''
-            Generate tokens using the model.
-            
-            Args:
-                1. initial_tokens - (batch_size, number_of_initial_tokens) tensor containing the initial tokens in the sequence.
-                2. num_tokens_to_generate - Number of tokens to generate for each element in the batch.
-            
-            Returns:
-                A (batch_size, number_of_initial_tokens + num_tokens_to_generate) tensor containing the initial tokens and the generated tokens for each element in the batch.
-        '''
-        generated_tokens = initial_tokens # generated_tokens has shape (batch_size, number_of_initial_tokens)
-        for i in range(num_tokens_to_generate):
-            # Take the last token for each element in the batch, and apply the model to generate the logits of the next token.
-            logits = self(generated_tokens[:, -1])
-            
-            #next_token_logits = logits[:, -1, :] # (B, C)
-            # Compute probability of next character by applying softmax for each element in the batch.
-            next_token_probability = nn.functional.softmax(next_token_logits, dim = 1)
-            
-            # Generate next character based on the predicted probability distribution.
-            next_token = torch.multinomial(next_token_probability, 1)
-            
-            generated_tokens = torch.cat((generated_tokens, next_token), dim = 1)
-        return generated_tokens
-    
-class MLP(nn.Module):
-    '''
-        Multilayer perceptron consisting of a linear layer, a non linear activation and a second linear layer.
-    '''
-    def __init__(self, input_dimension: int, hidden_dimension: int, output_dimension: int):
-        super().__init__()
-        self.layer = nn.Sequential(
-            nn.Linear(input_dimension, hidden_dimension), 
-            nn.ReLU(), 
-            nn.Linear(hidden_dimension, output_dimension))
-        
-    def forward(self, x):
-        return self.layer(x)
+from collections.abc import Callable
+import torch, torch.nn as nn
+torch.manual_seed(123)
 
-class MultiHeadMaskedAttention(nn.Module):
-    '''
-        Multihead attention layer which can perform causal or non causal attention.
-    '''
-    def __init__(self, mask: bool, num_heads: int, head_dimension: int, input_dimension: int):
-        '''
+
+        
+def create_vocabulary(data: str, visualize: bool = False) -> (list[str], dict[str, int], dict[int, str], Callable[str, list[int]], Callable[list[int], str]):
+    vocabulary = sorted(list(set(data)))
+    token_to_index_map = {token:index for (index, token) in enumerate(vocabulary)}
+    index_to_token_map = {index:token for (index, token) in enumerate(vocabulary)}
+
+    if visualize:
+        print(f'Visualizing vocabulary.')
+        print(f'Length of vocabulary: {len(vocabulary)}.')
+        print(f'Vocabulary is {"".join(vocabulary)}.')
+        print(f'Token to index map sorted is {token_to_index_map}')
+        print(f'Index to token map sorted is {index_to_token_map}')              
+        
+    def encoder(input: str) -> (list[int]):
+        ''' Encodes the input string. 
+            
             Args:
-                1. mask - Whether to apply causal attention or not.
-                2. num_heads - Number of heads to use when computing multihead attention.
-                3. head_dimension - Dimension of the head embedding.
-                4. input_dimension - dimension of the input embedding.
+                input: string of text to be encoded.
+                
+            Returns:
+                List of indices of the tokens in the input string.
         '''
-        super().__init__()
-        self.mask: bool = mask
-        self.num_heads = num_heads
-        self.head_dimension = head_dimension
-        self.Wq = nn.Linear(input_dimension, num_heads * head_dimension) # (Re, nh * Rh)
-        self.Wk = nn.Linear(input_dimension, num_heads * head_dimension)
-        self.Wv = nn.Linear(input_dimension, num_heads * head_dimension)
-        self.head_merge_layer = nn.Linear(num_heads*head_dimension, input_dimension)
-        
-    def forward(self, queries, keys, values):
-        # queries - (B, T, input_dimension)
-        (batch_size, block_size, _) = queries.shape
-        projected_queries = self.Wq(queries) # (B, T, nh*Rh)
-        reshaped_queries = projected_queries.view(-1, block_size, self.num_heads, self.head_dimension) # (B, T, nh, Rh)
-        transposed_queries = reshaped_queries.transpose(1, 2) # (B, nh, T, Rh)\
-        
-        projected_keys = self.Wk(keys) # (B, T, nh*Rh)
-        reshaped_keys = projected_keys.view(-1, block_size, self.num_heads, self.head_dimension)
-        transposed_keys = reshaped_keys.transpose(1, 2) # (B, nh, T, Rh)
-        
-        projected_values = self.Wv(values) # (B, T, nh*Rh)
-        reshaped_values = projected_values.view(-1, block_size, self.num_heads, self.head_dimension)
-        transposed_values = reshaped_values.transpose(1,2) # (B, nh, T, Rh)
-        
-        
-        attention = transposed_queries @ (transposed_keys.transpose(2, 3)) # (B, nh, T, T)
-        if self.mask:
-            tril_mat = torch.tril(torch.ones(block_size, block_size))
-            attention.masked_fill(tril_mat == 0, -torch.inf)
-        attention = nn.functional.softmax(attention, dim = 2) / self.head_dimension**(0.5) # (B, nh, T, T)
-        attention_output_multihead = attention @ transposed_values # (B, nh, T, Rh)
-        
-        # Combining multiple heads.
-        transposed_attention_output_multihead = attention_output_multihead.transpose(1, 2) # (B, T, nh, Rh)
-        rehaped_attention_output_multihead = transposed_attention_output_multihead.contiguous().view(-1, block_size, self.num_heads * self.head_dimension)
-        attention_output = self.head_merge_layer(rehaped_attention_output_multihead)
-        return attention_output
-        
-        
-class TransformerDecoderBlock(nn.Module):
-    '''
-        Layer which applies a single Transformer Decoder block. 
-    '''
-    def __init__(self, mask: bool, input_dimension: int, num_heads: int, head_dimension: int):
-        super().__init__()
-        self.attention_layer = MultiHeadMaskedAttention(mask, num_heads, head_dimension, input_dimension)
-        self.mlp_layer = MLP(input_dimension, 2 * input_dimension, input_dimension)
-        self.layer_norm = nn.LayerNorm(input_dimension)
-        
-        
-    def forward(self, x):
-        attention_output = self.attention_layer(x, x, x)
-        normalized_output = self.layer_norm(attention_output)
-        residual_output = x + normalized_output
-        mlp_output = self.mlp_layer(residual_output)
-        return mlp_output
-        
+        return [token_to_index_map[token] for token in input]
     
-class GPT(nn.Module):
-    '''
-        Layer corresponding to the Generative Pretrained Transformer (GPT) model.
-    '''
-    def __init__(self, num_decoder_blocks, vocabulary_size, embedding_dimension, num_heads, head_dimension, max_block_size):
-        super().__init__()
-        self.max_block_size = max_block_size
-        self.token_embedding_layer = nn.Embedding(vocabulary_size, embedding_dimension)
-        self.positional_encoding_layer = nn.Embedding(max_block_size, embedding_dimension)
-        self.transformer_decoders = nn.ModuleList([TransformerDecoderBlock(True, embedding_dimension, num_heads, head_dimension) for block_index in range(num_decoder_blocks)])
-        self.head_layer = nn.Linear(embedding_dimension, vocabulary_size)
+    def decoder(input: list[int]) -> str:
+        ''' Decodes the input token index into text.
         
+            Args:
+                input: List of indices of tokens in the text to be decoded.
+                
+            Returns:
+                String corresponding to the decoded text.
+        '''
+        return ''.join([index_to_token_map[index] for index in input])
         
-    # Notation - B - batch size, T - block size, Re - embedding dimension.
-    def forward(self, x): # x - (B, T)
-        (batch_size, current_block_size) = x.shape
-        token_embeddings = self.token_embedding_layer(x) # (B, T, Re)
-        positional_tensor = torch.arange(start = 0, end = current_block_size, dtype = torch.long)
-        positional_embeddings = self.positional_encoding_layer(positional_tensor) # (T, Re)
-        transformer_input = token_embeddings + positional_embeddings # (B, T, Re)
-        transformer_output = transformer_input
-        for decoder in self.transformer_decoders:
-            transformer_output = decoder(transformer_output) # (B, T, Re)
-        output = self.head_layer(transformer_output)
+    return (vocabulary, token_to_index_map, index_to_token_map, encoder, decoder)
+
+def run_tokenizer_example(run: bool = False) -> None:
+    ''' Run example text using character level tokenizer.'''
+    if run:
+        print('Running Tokenizer example.')
+        input_text = 'Hello, how are you?'
+        tokenized_text = encoder(input_text)
+        decoded_text = decoder(tokenized_text)
+        print(f'{input_text=}, {tokenized_text=}, {decoded_text=}.')
         
-        return output
-        
-    def generate(self, initial_tokens, num_tokens_to_generate):
-        generated_tokens = initial_tokens
-        for generated_token_index in range(num_tokens_to_generate):
-            network_input = generated_tokens
-            (_, current_block_size) = network_input.shape
-            if current_block_size > self.max_block_size:
-                network_input = network_input[:, current_block_size - self.max_block_size:]
-            network_output = self(network_input) # (1, T, Vocab)
-            token_probabilities = nn.functional.softmax(network_output[:, -1, :], dim=1) # (B, Vocab)
-            current_generated_token = torch.multinomial(token_probabilities, 1)
-            generated_tokens = torch.cat([generated_tokens, current_generated_token], dim = 1)
-        return generated_tokens
+def visualize_batch(x, y, skip_visualization: bool = True):
+    if not skip_visualization:
+        for sample in range(x.shape[0]):
+            for context in range(x.shape[1]):
+                print(f' Context: {x[sample, :context+1]}. Target: {y[sample, context]}.')
+
+def create_batch(split, block_size, batch_size):
+    data = train_set if split == 'train' else val_set
+    batch_start_index = torch.randint(0, len(data) - block_size - 1, (batch_size,))
+    x = torch.stack([data[i:i+block_size] for i in batch_start_index])
+    y = torch.stack([data[i+1: i+1+block_size] for i in batch_start_index])
+    return (x,y)
+            
+@torch.no_grad()
+def evaluate_loss(batch_index, model, batch_size, block_size):
+    model.eval()
+
+    (x, y) = create_batch('train', block_size, batch_size)
+    predictions = model(x)
+    (B, T, C) = predictions.shape
+    predictions = predictions.view(B*T, C)
+    y = y.view(-1)
+    train_loss = nn.functional.cross_entropy(predictions, y)
+    
+    (x, y) = create_batch('val', block_size, batch_size)
+    predictions = model(x)
+    (B, T, C) = predictions.shape
+    predictions = predictions.view(B*T, C)
+    y = y.view(-1)
+    val_loss = nn.functional.cross_entropy(predictions, y)
+    model.train()
+    
+    print(f'Step: {batch_index}. Train loss: {train_loss.item()}. Validation loss: {val_loss.item()}')
+    
+
+# Read input file.
+filename = 'data/tinyshakespeare.txt'
+data = read_dataset(filename)
+(vocabulary, token_to_index_map, index_to_token_map, encoder, decoder) = create_vocabulary(data, False)
+run_tokenizer_example(False)
+
+# Tokenize dataset.
+input_sequence = torch.tensor(encoder(data), dtype=torch.long)
+#print(f'Tokenized input sequence is {input_sequence}.')
+print(f'Shape: {input_sequence.shape}, Type: {input_sequence.dtype}.')
+
+dataset_split_fraction = 0.9
+num_train_samples = int(dataset_split_fraction * len(data))
+train_set = input_sequence[:num_train_samples]
+val_set = input_sequence[num_train_samples:]
+print(f'Number of train samples is {len(train_set)}. Number of validation samples is {len(val_set)}.')
+
+
+
+max_block_size = 24
+batch_size = 32
+num_batches = 1000
+num_decoder_blocks = 10
+vocabulary_size = len(vocabulary)
+embedding_dimension = 64
+num_heads = 8
+head_dimension = 16
+
+
+#model = BigramLanguageModel(len(vocabulary))
+model = GPT(num_decoder_blocks, vocabulary_size, embedding_dimension, num_heads, head_dimension, max_block_size)
+optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
+
+for batch_index in range(num_batches):
+    (x, y) = create_batch('train', max_block_size, batch_size)
+    visualize_batch(x, y, True)
+    predictions = model(x)
+
+    (B, T, C) = predictions.shape
+    predictions = predictions.view(B*T, C)
+    y = y.view(-1)
+    loss = nn.functional.cross_entropy(predictions, y)
+
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    
+    if batch_index % 10 == 0:
+        evaluate_loss(batch_index, model, batch_size, max_block_size)
+        generated_tokens = model.generate(torch.zeros((1, 1), dtype = torch.long), 10).tolist()[0]
+        generated_text = decoder(generated_tokens)
+        print(f'Generated text is \n {generated_text}.')
