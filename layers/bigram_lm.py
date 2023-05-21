@@ -1,3 +1,5 @@
+# Class implementing Bigram Language model.
+
 from torch.nn import Module
 from torch.nn.functional import softmax
 import torch
@@ -8,6 +10,7 @@ class BigramLanguageModel(Module):
         the current character.
     '''
     def __init__(self, vocabulary_size: int):
+        # Parent module initialization is important for getting the goodness from nn.Module.
         super().__init__()
         # Embedding layer which predicts the logits of the next character as the embedding vector of the current character.
         self.embedding = nn.Embedding(vocabulary_size, vocabulary_size)
@@ -29,9 +32,8 @@ class BigramLanguageModel(Module):
         generated_tokens = initial_tokens # generated_tokens has shape (batch_size, number_of_initial_tokens)
         for i in range(num_tokens_to_generate):
             # Take the last token for each element in the batch, and apply the model to generate the logits of the next token.
-            logits = self(generated_tokens[:, -1])
+            next_token_logits = self(generated_tokens[:, -1])
 
-            #next_token_logits = logits[:, -1, :] # (B, C)
             # Compute probability of next character by applying softmax for each element in the batch.
             next_token_probability = softmax(next_token_logits, dim = 1)
 

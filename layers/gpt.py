@@ -1,13 +1,23 @@
-# Python script to train CharGPT models.
+''' Class implementing the GPT language model from scratch.
+
+    In the future. layers implemented in this file for multihead masked attention and
+    multilayer perceptrons can be moved to their own files for clarity.
+'''
 
 import torch, torch.nn as nn
 from typing import Optional
 
 class MLP(nn.Module):
     '''
-        Multilayer perceptron consisting of a linear layer, a non linear activation and a second linear layer.
+        Multilayer perceptron consisting of a linear layer, a non linear activation (ReLU) and a second linear layer.
     '''
     def __init__(self, input_dimension: int, hidden_dimension: int, output_dimension: int):
+        '''
+            Args:
+                1. input_dimension - Dimension of the input to the layer.
+                2. hidden_dimension - Dimension of the output of the first linear layer.
+                3. output_dimension - Dimension of the output of the MLP module.
+        '''
         super().__init__()
         self.layer = nn.Sequential(
             nn.Linear(input_dimension, hidden_dimension),
