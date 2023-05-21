@@ -1,6 +1,8 @@
 # LLMs From Scratch
 
-![LLMs From Scratch](docs/images/readme_image.png)
+<p align="center">
+  <img src="docs/images/readme_image.png" width=75%/>
+</p>
 
 Repository of architectures for Large Language Models (LLMs), along with algorithms for
 data collection, pretraining, finetuning, evaluation and distillation.
