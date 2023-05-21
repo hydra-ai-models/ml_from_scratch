@@ -1,4 +1,8 @@
-# Python script to train CharGPT models.
+# Python script to train LLM models.
+# Run using
+#   python -m trainer
+
+import os
 
 from datasets.text_dataset import TextDataset
 from tokenizers.char_tokenizer import CharTokenizer
@@ -24,8 +28,13 @@ num_heads = 8
 head_dimension = 16
 num_tokens_to_generate_during_evaluation = 10
 torch.manual_seed(123)
-model_path = 'gpt.pt'
+output_model_path = 'output/gpt.pt'
+output_params_path = 'output/num_parameters.txt'
 
+# Create directory corresponding to output_model_path if it does not exist.
+model_dirname = os.path.dirname(output_model_path)
+if not os.path.exists(model_dirname):
+    os.makedirs(model_dirname)
 
 # Generate train and validation datasets and data loaders.
 train_dataset = TextDataset(max_block_size, tokenizer, 'train', train_fraction, filename = data_filename)
@@ -36,7 +45,7 @@ val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size, shuffle = 
 
 
 model = GPT(num_decoder_blocks, tokenizer.vocabulary_length(), embedding_dimension, num_heads, head_dimension, max_block_size)
-num_model_parameters = layer_utils.num_parameters(model, 'num_parameters.txt')
+num_model_parameters = layer_utils.num_parameters(model, output_params_path)
 print(f'Number of parameters in the model is {num_model_parameters["total_trainable_parameters"]}.')
 
 optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
@@ -45,7 +54,7 @@ evaluator = Evaluator()
 for (batch_index, train_batch) in enumerate(train_dataloader):
     if batch_index > num_batches_to_train:
         print('Reached maximum number of matches. Training is now complete.')
-        torch.save(model.state_dict(), model_path)
+        torch.save(model.state_dict(), output_model_path)
         break
 
     train_features = train_batch['features']
