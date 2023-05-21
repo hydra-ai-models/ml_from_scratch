@@ -3,6 +3,7 @@
 from datasets.text_dataset import TextDataset
 from tokenizers.char_tokenizer import CharTokenizer
 from layers.gpt import GPT
+from layers import layer_utils
 from evaluate import Evaluator
 
 from collections.abc import Callable
@@ -15,14 +16,15 @@ tokenizer = CharTokenizer(filename = data_filename)
 max_block_size = 24
 train_fraction = 0.9
 batch_size = 32
-num_batches_to_train = 1000
+num_batches_to_train = 500
 num_batches_to_evaluate = 10
 num_decoder_blocks = 10
 embedding_dimension = 64
 num_heads = 8
 head_dimension = 16
-num_tokens_to_generate_during_evaluation = 100
+num_tokens_to_generate_during_evaluation = 10
 torch.manual_seed(123)
+model_path = 'gpt.pt'
 
 
 # Generate train and validation datasets and data loaders.
@@ -34,12 +36,16 @@ val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size, shuffle = 
 
 
 model = GPT(num_decoder_blocks, tokenizer.vocabulary_length(), embedding_dimension, num_heads, head_dimension, max_block_size)
+num_model_parameters = layer_utils.num_parameters(model, 'num_parameters.txt')
+print(f'Number of parameters in the model is {num_model_parameters["total_trainable_parameters"]}.')
+
 optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
 evaluator = Evaluator()
 
 for (batch_index, train_batch) in enumerate(train_dataloader):
     if batch_index > num_batches_to_train:
         print('Reached maximum number of matches. Training is now complete.')
+        torch.save(model.state_dict(), model_path)
         break
 
     train_features = train_batch['features']
