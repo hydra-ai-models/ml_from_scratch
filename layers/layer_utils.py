@@ -1,5 +1,7 @@
 # Common utilities for layers.
 
+import os
+
 import torch.nn as nn
 from typing import Optional
 
@@ -16,6 +18,10 @@ def num_parameters(model: nn.Module, output_path: Optional[str] = '') -> dict[st
     output_dict['total_trainable_parameters'] = total_trainable_parameters
 
     if output_path:
+        # Create directory of the output_path if it does not exist.
+        dirname = os.path.dirname(output_path)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
         with open(output_path, 'w') as writer:
             writer.write(str(output_dict))
     return output_dict
