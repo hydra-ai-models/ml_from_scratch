@@ -1,7 +1,7 @@
 # LLMs From Scratch
 
 <p align="center">
-  <img src="docs/images/readme_image.png" width=75%/>
+  <img src="docs/images/readme_image.png" width=50%/>
 </p>
 
 Repository of architectures for Large Language Models (LLMs), along with algorithms for
