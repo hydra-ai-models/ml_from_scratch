@@ -4,7 +4,7 @@
 
 from tokenizers.base_tokenizer import BaseTokenizer
 from torch.utils.data import Dataset
-from torch import Tensor
+import torch
 from typing import Optional, Type
 import os
 
@@ -37,8 +37,8 @@ class TextDataset(Dataset):
     def __len__(self) -> int:
         return len(self._data) - self._max_block_size
 
-    def __getitem__(self, idx) -> dict[str, Tensor]:
+    def __getitem__(self, idx) -> dict[str, torch.Tensor]:
         # To avoid tokenizing same tokens twice, tokenize the tokens needed for input and output in one go,
         # and then separate this tokenized block into input and output.
         tokenized_block = self._tokenizer.encode(self._data[idx: idx + self._max_block_size + 1])
-        return {'features': Tensor(tokenized_block[:-1]), 'labels': Tensor(tokenized_block[1:])}
+        return {'features': torch.Tensor(tokenized_block[:-1]).long(), 'labels': torch.Tensor(tokenized_block[1:]).long()}

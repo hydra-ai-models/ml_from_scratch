@@ -1,21 +1,34 @@
 # Implementations of character tokenizer, which uses each character as a token.
 
+from typing import Optional
 from tokenizers.base_tokenizer import BaseTokenizer
 
 class CharTokenizer(BaseTokenizer):
     ''' Concrete tokenizer class which does character level tokenization. Vocabulary for tokenization is created dynamically based on the document passed during initialization. Every unique character in this document becomes a new token. Currently unseen tokens during encoding are not handled, but this can be handled in the future simply by adding a single new token.'''
 
-    def __init__(self, document: str)-> None:
+    def __init__(self, filename: Optional[str] = '', document: Optional[str] = '')-> None:
         ''' Initializes CharTokenizer.
 
             Args:
-                1. document - String of text to use to dynamically create the vocabulary for tokenization. Current implementation assumes that all tokens to be encoded and decoded in the future will be present in this document. This restriction will be removed in future implementations.
+                1. filename - Path of the file containing the test to use to dynamically create the vocabulary for tokenization.
+                2. document - String of text to use to dynamically create the vocabulary for tokenization. One of document or filename should be specified.
+
+            Current implementation assumes that all tokens to be encoded and decoded in the future will be present either in the document or in the file whose path is provided. This restriction will be removed in future implementations.
 
             Returns:
                 No return values.
         '''
         # Since this is a character level tokenizer, vocabulary is obtained by finding unique characters in the document using the set(), and converting it to a list with the list(). Sorting is done just to ensure a repeatable order for debugging and cleanliness.
-        self._vocabulary = sorted(list(set(document)))
+        if not len(filename) and not len(document):
+            ValueError(f'One of filename or document should be non empty.')
+
+        if len(filename):
+            with open(filename, 'r') as reader:
+                text_data = reader.read()
+        else:
+            text_data = document
+
+        self._vocabulary = sorted(list(set(text_data)))
 
         # Vocabulary length is cached for speed up.
         self._vocabulary_length = len(self._vocabulary)
