@@ -1,6 +1,7 @@
 ''' Class implementing the GPT language model from scratch.
 '''
 
+import os
 import torch, torch.nn as nn
 from typing import Optional
 
@@ -53,30 +54,3 @@ class GPT(nn.Module):
             current_generated_token = torch.multinomial(token_probabilities, 1)
             generated_tokens = torch.cat([generated_tokens, current_generated_token], dim = 1)
         return generated_tokens
-
-class GPTWithLoRAFinetuning(GPT):
-    '''
-        Layer corresponding to the Generative Pretrained Transformer (GPT) model and
-        supports LoRA finetuning (https://arxiv.org/abs/2106.09685).
-    '''
-    def __init__(self, num_decoder_blocks, vocabulary_size, embedding_dimension, num_heads, head_dimension, max_block_size, mode: str, lora_rank: int = 4):
-        '''
-            Initializer function.
-
-            Args:
-                1. num_decoder_blocks - See documentation of parent class (GPT).
-                2. vocabulary_size - See documentation of parent class (GPT).
-                3. embedding_dimension - See documentation of parent class (GPT).
-                4. num_heads - See documentation of parent class (GPT).
-                5. head_dimension - See documentation of parent class (GPT).
-                6. max_block_size - See documentation of parent class (GPT).
-                7. mode - Whether doing pretraining or finetuning. Supported values are ['pretraining', 'finetuning']
-                8. lora_rank - Rank to be used for the LoRA matrices A and B. Default value is 4.
-        '''
-            super().init(num_decoder_blocks, vocabulary_size, embedding_dimension, num_heads, head_dimension, max_block_size)
-            self.supported_mode_values: list[str] = ['pretraining', 'finetuning']
-            assert mode in supported_mode_values, f'Unsupported value {mode}. Supported values are {self.supported_mode_values}'
-            self.mode = mode
-
-            if mode == 'finetuning':
-                self.transformer_decoders = nn.ModuleList([TransformerDecoderBlockWithLoRAFinetuning(True, embedding_dimension, num_heads, head_dimension, mode, lora_rank) for block_index in range(num_decoder_blocks)])
