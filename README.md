@@ -15,8 +15,8 @@ like Datasets and DataLoaders. The repository also aims to expand beyond pretrai
 like LoRA finetuning, distillation and RLHF alignment.
 
 ## Algorithms implemented in this repository
-1. Pretraining of GPT models.
-2. Finetuning of GPT models using LoRA.
+1. Pretraining of GPT models (https://arxiv.org/abs/2005.14165).
+2. Finetuning of GPT models using LoRA (https://arxiv.org/abs/2106.09685).
 
 ## Getting started
 To pretrain GPT model, run the python script `trainer_gpt_pretraining.py` using `python -m trainer_gpt_pretraining`, or run the Jupyter notebook `trainer_gpt_pretraining.ipynb`. Running this script will train the GPT model, and store the model file in the `output` directory. Similarly, a text file is created in this directory with more details about the trainable and non trainable parameters in the model.
