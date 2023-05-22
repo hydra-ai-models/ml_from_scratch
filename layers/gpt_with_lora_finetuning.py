@@ -37,6 +37,8 @@ class GPTWithLoRAFinetuning(GPT):
 
             if not os.path.exists(pretrained_model_path):
                 ValueError(f'Pretrained model does not exist at {pretrained_model_path}. Please update pretrained_model_path and run again.')
+            # Note that strict is set to False, since model contains additional LoRA matrices, while pretrained model most likely wont
+            # contain them.
             self.load_state_dict(torch.load(pretrained_model_path), strict = False)
 
             # Making all parameters except the LoRA ones non trainable. Note that this  implementation assumes

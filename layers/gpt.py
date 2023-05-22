@@ -1,7 +1,6 @@
 ''' Class implementing the GPT language model from scratch.
 '''
 
-import os
 import torch, torch.nn as nn
 from typing import Optional
 
