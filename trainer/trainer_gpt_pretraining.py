@@ -1,6 +1,6 @@
 # Trainer script for GPT pretraining.
-# Run using
-#   python -m trainer_gpt_pretraining
+# Move to the repo directory with the README file. Now, run this script using
+#   python -m trainer.trainer_gpt_pretraining
 
 import os
 
