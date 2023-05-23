@@ -45,7 +45,7 @@ num_batches_between_evaluations = 10
 
 # Output parameters.
 output_model_path = 'output/gpt_lora_finetuned_model.pt'
-output_params_path = 'output/num_parameters_lora_finetuning.txt'
+output_params_path = 'output/num_parameters_lora_finetuning.yaml'
 
 # Fixing seed for reproducing results.
 torch.manual_seed(123)

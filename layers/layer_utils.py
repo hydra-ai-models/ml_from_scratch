@@ -1,11 +1,12 @@
 # Common utilities for layers.
 
 import os
+import yaml
 
 import torch.nn as nn
 from typing import Optional
 
-def num_parameters(model: nn.Module, output_path: Optional[str] = '') -> dict[str, int]:
+def num_parameters(model: nn.Module, output_yaml_path: Optional[str] = '') -> dict[str, int]:
     output_dict = {}
     output_dict['all_parameters'] = {}
     output_dict['trainable_parameters'] = {}
@@ -20,16 +21,12 @@ def num_parameters(model: nn.Module, output_path: Optional[str] = '') -> dict[st
     output_dict['total_parameters'] = total_parameters
     output_dict['total_trainable_parameters'] = total_trainable_parameters
 
-    if output_path:
+    if output_yaml_path:
         # Create directory of the output_path if it does not exist.
-        dirname = os.path.dirname(output_path)
+        dirname = os.path.dirname(output_yaml_path)
         if not os.path.exists(dirname):
             os.makedirs(dirname)
-        with open(output_path, 'w') as writer:
-            writer.write(f'Total number of parameters in the model is {total_parameters}')
-            writer.write(f'\nTotal number of trainable parameters in the model is {total_trainable_parameters}')
-            writer.write('\n\nAll parameters: layer names and number of parameters\n')
-            writer.write(str(output_dict['all_parameters']))
-            writer.write('\n\nTrainable parameters: layer names and number of parameters\n')
-            writer.write(str(output_dict['trainable_parameters']))
+        writer = open(output_yaml_path, 'w')
+        yaml.dump(output_dict, writer)
+        writer.close()
     return output_dict
