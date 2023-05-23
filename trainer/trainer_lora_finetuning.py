@@ -1,12 +1,12 @@
-# Trainer script for GPT pretraining.
-# Run using
-#   python -m trainer_gpt_pretraining
+# Trainer script for LoRA finetuning of GPT models.
+# Move to the repo directory with the README file. Now, run this script using
+#   python -m trainer.trainer_lora_finetuning
 
 import os
 
 from datasets.text_dataset import TextDataset
 from tokenizers.char_tokenizer import CharTokenizer
-from layers.gpt import GPT
+from layers.gpt_with_lora_finetuning import GPTWithLoRAFinetuning
 from layers import layer_utils
 from evaluate import Evaluator
 
@@ -29,6 +29,10 @@ num_heads = 8
 head_dimension = 16
 num_decoder_blocks = 10
 
+# LoRA finetuning parameters.
+mode = 'finetuning'
+pretrained_model_path = 'output/gpt_pretrained_model.pt'
+
 # Training hyperparameters.
 max_block_size = 24
 batch_size = 32
@@ -40,8 +44,8 @@ num_tokens_to_generate_during_evaluation = 10
 num_batches_between_evaluations = 10
 
 # Output parameters.
-output_model_path = 'output/gpt_pretrained_model.pt'
-output_params_path = 'output/num_parameters_gpt_pretraining.txt'
+output_model_path = 'output/gpt_lora_finetuned_model.pt'
+output_params_path = 'output/num_parameters_lora_finetuning.yaml'
 
 # Fixing seed for reproducing results.
 torch.manual_seed(123)
@@ -59,7 +63,7 @@ train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size, shuffl
 val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size, shuffle = True)
 
 # Define the model architecture and optimizer.
-model = GPT(num_decoder_blocks, tokenizer.vocabulary_length(), embedding_dimension, num_heads, head_dimension, max_block_size)
+model = GPTWithLoRAFinetuning(num_decoder_blocks, tokenizer.vocabulary_length(), embedding_dimension, num_heads, head_dimension, max_block_size, mode=mode, pretrained_model_path = pretrained_model_path)
 num_model_parameters = layer_utils.num_parameters(model, output_params_path)
 print(f'Number of parameters in the model is {num_model_parameters["total_trainable_parameters"]}.')
 

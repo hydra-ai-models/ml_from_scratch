@@ -19,6 +19,17 @@ like LoRA finetuning, distillation and RLHF alignment.
 2. Finetuning of GPT models using LoRA (https://arxiv.org/abs/2106.09685).
 
 ## Getting started
+
+### Setting up the dev environment.
+#### On Mac
+First create a conda environment and activate it. Sample commands to run in the terminal are
+`conda create --name llms_from_scratch_env python=3.9`
+
+`conda activate llms_from_scratch_env`
+
+Now install requirements by running `pip install -r requirements.txt`
+
+### Running the trainer scripts
 To pretrain GPT model, run the python script `trainer_gpt_pretraining.py` using `python -m trainer_gpt_pretraining`, or run the Jupyter notebook `trainer_gpt_pretraining.ipynb`. Running this script will train the GPT model, and store the model file in the `output` directory. Similarly, a text file is created in this directory with more details about the trainable and non trainable parameters in the model.
 
 To perform LoRA finetuning of the GPT model, run the python script `trainer_lora_finetuning.py` using `python -m trainer_lora_finetuning`, or run the Jupyter notebook `trainer_lora_finetuning.ipynb`. Running this script will finetuning the GPT model, and store the model file in the `output` directory. Similarly, a text file is created in this directory with more details about the trainable and non trainable parameters in the model.
