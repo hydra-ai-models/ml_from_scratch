@@ -22,8 +22,7 @@ like LoRA finetuning, distillation and RLHF alignment.
 
 ### Setting up the dev environment.
 #### On Mac
-Note that only small models with around 500k parameters can be trained on Mac due to limited memory and lack of GPUs. This is still a good step to do
-for prototyping architecture implementations on small datasets.
+Note that only small models with around 500k parameters can be trained on Mac due to limited memory and lack of GPUs. This is still a good step to do for prototyping architecture implementations on small datasets.
 
 First create a conda environment and activate it. Sample commands to run in the terminal are
 `conda create --name llms_from_scratch_env python=3.9`
@@ -35,7 +34,7 @@ Now install requirements by running `pip install -r requirements.txt`
 #### On AWS
 Create an AWS account at https://aws.amazon.com/. Go to the EC2 page and click `Launch Instance`. Give a name for your instance, and select a recent PyTorch image as the AMI. Request a `t2.large` instance with 8GB RAM to try out the small example first. To scale to larger examples, you will need to request more powerful machines with GPUs. But it is a good idea to first get a small example working on a small machine to prototype. Click `Launch Instance` button to create the instance. Now click the instance, Connect -> SSH client, and copy the ssh command shown. Running this command from your mac will ssh into the EC2 instance. Once you ssh into the EC2 instance, clone this repository using `git clone git@github.com:hydra-ai-models/llms_from_scratch.git`. Now move to the main repository directory using `cd llms_from_scratch`.
 
-Run the `conda create --name llms_from_scratch_env python=3.9`, `conda activate llms_from_scratch_env` and `pip install -r requirements.txt` as explained in the previous section to set up the dev environment.
+Run the commands `conda create --name llms_from_scratch_env python=3.9`, `conda activate llms_from_scratch_env` and `pip install -r requirements.txt` as explained in the previous section to set up the dev environment.
 
 ### Running the trainer scripts
 To pretrain GPT model, run the python script `trainer_gpt_pretraining.py` using `python -m trainer_gpt_pretraining`, or run the Jupyter notebook `trainer_gpt_pretraining.ipynb`. Running this script will train the GPT model, and store the model file in the `output` directory. Similarly, a text file is created in this directory with more details about the trainable and non trainable parameters in the model.
