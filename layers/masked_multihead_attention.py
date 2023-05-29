@@ -23,6 +23,7 @@ class MaskedMultiHeadAttention(nn.Module):
         self.Wq = nn.Linear(input_dimension, num_heads * head_dimension) # (Re, nh * Rh)
         self.Wk = nn.Linear(input_dimension, num_heads * head_dimension)
         self.Wv = nn.Linear(input_dimension, num_heads * head_dimension)
+        self.tril_mat = torch.tril(torch.ones(1, 1))
         self.head_merge_layer = nn.Linear(num_heads*head_dimension, input_dimension)
 
     def forward(self, queries, keys, values):
@@ -40,11 +41,10 @@ class MaskedMultiHeadAttention(nn.Module):
         reshaped_values = projected_values.view(-1, block_size, self.num_heads, self.head_dimension)
         transposed_values = reshaped_values.transpose(1,2) # (B, nh, T, Rh)
 
-
         attention = transposed_queries @ (transposed_keys.transpose(2, 3)) # (B, nh, T, T)
         if self.mask:
-            tril_mat = torch.tril(torch.ones(block_size, block_size))
-            attention.masked_fill(tril_mat == 0, -torch.inf)
+            self.tril_mat = torch.tril(torch.ones(block_size, block_size))
+            attention.masked_fill(self.tril_mat == 0, -torch.inf)
         attention = nn.functional.softmax(attention, dim = 2) / self.head_dimension**(0.5) # (B, nh, T, T)
         attention_output_multihead = attention @ transposed_values # (B, nh, T, Rh)
 

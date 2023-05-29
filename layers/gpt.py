@@ -16,6 +16,7 @@ class GPT(nn.Module):
         self.max_block_size = max_block_size
         self.token_embedding_layer = nn.Embedding(vocabulary_size, embedding_dimension)
         self.positional_encoding_layer = nn.Embedding(max_block_size, embedding_dimension)
+        self.positional_tensor = torch.arange(start = 0, end = max_block_size, dtype = torch.long)
         self.transformer_decoders = nn.ModuleList([TransformerDecoderBlock(True, embedding_dimension, num_heads, head_dimension) for block_index in range(num_decoder_blocks)])
         self.head_layer = nn.Linear(embedding_dimension, vocabulary_size)
 
@@ -24,8 +25,8 @@ class GPT(nn.Module):
     def forward(self, x, y: Optional[torch.Tensor] = None): # x - (B, T)
         (batch_size, current_block_size) = x.shape
         token_embeddings = self.token_embedding_layer(x) # (B, T, Re)
-        positional_tensor = torch.arange(start = 0, end = current_block_size, dtype = torch.long)
-        positional_embeddings = self.positional_encoding_layer(positional_tensor) # (T, Re)
+        self.positional_tensor = torch.arange(start = 0, end = current_block_size, dtype = torch.long)
+        positional_embeddings = self.positional_encoding_layer(self.positional_tensor) # (T, Re)
         transformer_input = token_embeddings + positional_embeddings # (B, T, Re)
         transformer_output = transformer_input
         for decoder in self.transformer_decoders:

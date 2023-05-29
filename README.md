@@ -9,14 +9,14 @@ data collection, pretraining, finetuning, evaluation and distillation.
 
 All algorithms are implemented from scratch in PyTorch. Hence it serves as an excellent reference
 for students, ML engineers and ML practitioners alike. This repository is inspired by the
-minGPT (https://github.com/karpathy/minGPT) series, and adds on top by following industry best practices
+[minGPT series](https://github.com/karpathy/minGPT), and adds on top by following industry best practices
 like clean and well documented code, modular and well tested components, following standard PyTorch APIs
 like Datasets and DataLoaders. The repository also aims to expand beyond pretraining, and include other algorithms too
 like LoRA finetuning, distillation and RLHF alignment.
 
 ## Algorithms implemented in this repository
-1. Pretraining of GPT models (https://arxiv.org/abs/2005.14165).
-2. Finetuning of GPT models using LoRA (https://arxiv.org/abs/2106.09685).
+1. [Pretraining of GPT models](https://arxiv.org/abs/2005.14165).
+2. [Finetuning of GPT models using LoRA](https://arxiv.org/abs/2106.09685).
 
 ## Getting started with small prototypes
 
@@ -24,7 +24,7 @@ like LoRA finetuning, distillation and RLHF alignment.
 #### On Mac
 Note that only small models with around 500k parameters can be trained on Mac due to limited memory and lack of GPUs. This is still a good step to do for prototyping architecture implementations on small datasets.
 
-First create a conda environment and activate it. Sample commands to run in the terminal are
+We will be using conda virtual environments for development. If you have not used conda before, install it first following instructions [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/macos.html). Now create a conda environment and activate it. Sample commands to run in the terminal are
 `conda create --name llms_from_scratch_env python=3.9`
 
 `conda activate llms_from_scratch_env`
@@ -32,7 +32,7 @@ First create a conda environment and activate it. Sample commands to run in the 
 Now install requirements by running `pip install -r requirements.txt`
 
 #### On AWS
-Create an AWS account at https://aws.amazon.com/. Go to the EC2 page and click `Launch Instance`. Give a name for your instance, and select a recent PyTorch image as the AMI. Request a `t2.large` instance with 8GB RAM to try out the small example first. To scale to larger examples, you will need to request more powerful machines with GPUs. But it is a good idea to first get a small example working on a small machine to prototype. Click `Launch Instance` button to create the instance. Now click the instance, Connect -> SSH client, and copy the ssh command shown. Running this command from your mac will ssh into the EC2 instance. Once you ssh into the EC2 instance, clone this repository using `git clone git@github.com:hydra-ai-models/llms_from_scratch.git`. Now move to the main repository directory using `cd llms_from_scratch`.
+Create an [AWS account](https://aws.amazon.com/). Go to the EC2 page and click `Launch Instance`. Give a name for your instance, and select a recent PyTorch image as the AMI. Request a `t2.large` instance with 8GB RAM to try out the small example first. To scale to larger examples, you will need to request more powerful machines with GPUs. But it is a good idea to first get a small example working on a small machine to prototype. Click `Launch Instance` button to create the instance. Now click the instance, Connect -> SSH client, and copy the ssh command shown. Running this command from your mac will ssh into the EC2 instance. Once you ssh into the EC2 instance, clone this repository using `git clone git@github.com:hydra-ai-models/llms_from_scratch.git`. Now move to the main repository directory using `cd llms_from_scratch`.
 
 Run the commands `conda create --name llms_from_scratch_env python=3.9`, `conda activate llms_from_scratch_env` and `pip install -r requirements.txt` as explained in the previous section to set up the dev environment.
 
