@@ -43,7 +43,7 @@ To pretrain GPT model, run the python script `trainer_gpt_pretraining.py` using 
 To perform LoRA finetuning of the GPT model, run the python script `trainer_lora_finetuning.py` using `python -m trainer_lora_finetuning`, or run the Jupyter notebook `trainer_lora_finetuning.ipynb`. Running this script will finetuning the GPT model, and store the model file in the `output` directory. Similarly, a text file is created in this directory with more details about the trainable and non trainable parameters in the model.
 
 #### With HuggingFace Accelerate
-Hugging Face accelerate library allows you to scale training seamlessly in a distributed setting using optimizations from NVIDIA Megatron or DeepSpeed.
+[Hugging Face Accelerate](https://huggingface.co/docs/accelerate/main/en/index) allows you to scale training seamlessly in a distributed setting using optimizations from NVIDIA Megatron or DeepSpeed.
 To use HuggingFace accelerate for training, first create a config file for training by running `accelerate config`. On Mac, set `No distributed training`, and answer No to `dynamo script optimization` and `mixed precision` training. Now run the training using `accelerate launch -m trainer.trainer_gpt_pretraining_with_accelerate`
 
 

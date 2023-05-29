@@ -1,7 +1,10 @@
 # Trainer script for GPT pretraining using HuggingFace accelerate for largescale
 # distributed training.
-# Move to the repo directory with the README file. Now, run this script using
-#   python -m trainer.trainer_gpt_pretraining_with_accelerate
+# Move to the repo directory with the README file. Then create accelerate config by running
+#   accelerate config
+#
+# See README file for details on options to set for the config command. Now run training using
+#   accelerate launch -m trainer.trainer_gpt_pretraining_with_accelerate
 
 import os
 
