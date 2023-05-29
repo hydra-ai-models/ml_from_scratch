@@ -29,6 +29,7 @@ class MaskedMultiHeadAttention(nn.Module):
     def forward(self, queries, keys, values):
         # queries - (B, T, input_dimension)
         (batch_size, block_size, _) = queries.shape
+        device = queries.device
         projected_queries = self.Wq(queries) # (B, T, nh*Rh)
         reshaped_queries = projected_queries.view(-1, block_size, self.num_heads, self.head_dimension) # (B, T, nh, Rh)
         transposed_queries = reshaped_queries.transpose(1, 2) # (B, nh, T, Rh)\
@@ -43,7 +44,7 @@ class MaskedMultiHeadAttention(nn.Module):
 
         attention = transposed_queries @ (transposed_keys.transpose(2, 3)) # (B, nh, T, T)
         if self.mask:
-            self.tril_mat = torch.tril(torch.ones(block_size, block_size))
+            self.tril_mat = torch.tril(torch.ones(block_size, block_size, device = device))
             attention.masked_fill(self.tril_mat == 0, -torch.inf)
         attention = nn.functional.softmax(attention, dim = 2) / self.head_dimension**(0.5) # (B, nh, T, T)
         attention_output_multihead = attention @ transposed_values # (B, nh, T, Rh)

@@ -15,13 +15,13 @@ from collections.abc import Callable
 import torch, torch.nn as nn
 
 def train():
+
     print('Inside train().')
     # Main function for launching the training job.
 
-
     # Define hyperparameters.
 
-    # Dataset hyper parameters
+    # Dataset hyperparameters.
     data_filename = 'testdata/tinyshakespeare.txt'
     train_fraction = 0.9
 
@@ -37,7 +37,7 @@ def train():
     # Training hyperparameters.
     max_block_size = 24
     batch_size = 32
-    num_batches_to_train = 500
+    num_batches_to_train = 200
 
     # Evaluation hyperparameters.
     num_batches_to_evaluate = 10
@@ -75,9 +75,11 @@ def train():
     # Defining HF accelerator.
     from accelerate import Accelerator
     accelerator = Accelerator()
+    device = accelerator.device
+    print(f'Running training and evaluation on device {device}.')
 
     (model, optimizer, train_dataloader, scheduler) = accelerator.prepare(model, optimizer, train_dataloader, scheduler)
-    #model.to(accelerator.device)
+    model.to(device)
 
     # Perform model training and evaluation.
     for (batch_index, train_batch) in enumerate(train_dataloader):
@@ -86,21 +88,19 @@ def train():
             torch.save(model.state_dict(), output_model_path)
             break
 
-        train_features = train_batch['features']
-        train_labels = train_batch['labels']
-        train_features.to(accelerator.device)
-        train_labels.to(accelerator.device)
+        train_features = train_batch['features'].to(device)
+        train_labels = train_batch['labels'].to(device)
         predictions, loss = model(train_features, train_labels)
 
+        # Note that making the gradients zero is not needed with the accelerator, as it will take care of this.
         #optimizer.zero_grad()
         #loss.backward()
         accelerator.backward(loss)
         optimizer.step()
-        scheduler.step()
 
         if batch_index % num_batches_between_evaluations == 0:
-            (train_loss, val_loss) = evaluator.evaluate_train_and_validation_loss(train_dataloader, val_dataloader, model, num_batches_to_evaluate)
-            generated_text = evaluator.generate_text(model, num_tokens_to_generate_during_evaluation, tokenizer)
+            (train_loss, val_loss) = evaluator.evaluate_train_and_validation_loss(train_dataloader, val_dataloader, model, num_batches_to_evaluate, device)
+            generated_text = evaluator.generate_text(model, num_tokens_to_generate_during_evaluation, tokenizer, device)
             print(f' Batch index: {batch_index}, train loss: {train_loss}, val_loss: {val_loss}, generated text\n {generated_text}')
 
 if __name__ == '__main__':
