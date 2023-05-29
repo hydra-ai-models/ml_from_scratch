@@ -18,7 +18,7 @@ like LoRA finetuning, distillation and RLHF alignment.
 1. [Pretraining of GPT models](https://arxiv.org/abs/2005.14165).
 2. [Finetuning of GPT models using LoRA](https://arxiv.org/abs/2106.09685).
 
-## Getting started with small prototypes
+## Getting started
 
 ### Setting up the dev environment.
 #### On Mac

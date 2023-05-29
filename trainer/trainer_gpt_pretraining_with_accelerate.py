@@ -18,8 +18,6 @@ from collections.abc import Callable
 import torch, torch.nn as nn
 
 def train():
-
-    print('Inside train().')
     # Main function for launching the training job.
 
     # Define hyperparameters.
