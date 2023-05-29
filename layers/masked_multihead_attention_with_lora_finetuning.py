@@ -41,6 +41,7 @@ class MaskedMultiHeadAttentionWithLoRAFinetuning(MaskedMultiHeadAttention):
         # to teach users to implement these algorithms, and hence simplicity is preferred
         # over code duplication in this repository.
         (batch_size, block_size, _) = queries.shape # queries - (B, T, input_dimension)
+        device = queries.device
         projected_queries = self.Wq(queries) # (B, T, nh*Rh)
         if self.mode == 'finetuning':
             projected_queries += self.lora_Bq(self.lora_Aq(queries)) # (B, T, nh*Rh)
@@ -62,7 +63,7 @@ class MaskedMultiHeadAttentionWithLoRAFinetuning(MaskedMultiHeadAttention):
 
         attention = transposed_queries @ (transposed_keys.transpose(2, 3)) # (B, nh, T, T)
         if self.mask:
-            tril_mat = torch.tril(torch.ones(block_size, block_size))
+            tril_mat = torch.tril(torch.ones(block_size, block_size, device=device))
             attention.masked_fill(tril_mat == 0, -torch.inf)
         attention = nn.functional.softmax(attention, dim = 2) / self.head_dimension**(0.5) # (B, nh, T, T)
         attention_output_multihead = attention @ transposed_values # (B, nh, T, Rh)

@@ -23,8 +23,11 @@ class GPT(nn.Module):
     # Notation - B - batch size, T - block size, Re - embedding dimension.
     def forward(self, x, y: Optional[torch.Tensor] = None): # x - (B, T)
         (batch_size, current_block_size) = x.shape
+        # For any tensor created in forward(), model.to(device) will not take effect. Hence,
+        # we have to create them in the device of the input x.
+        device = x.device
         token_embeddings = self.token_embedding_layer(x) # (B, T, Re)
-        positional_tensor = torch.arange(start = 0, end = current_block_size, dtype = torch.long)
+        positional_tensor = torch.arange(start = 0, end = current_block_size, dtype = torch.long, device = device)
         positional_embeddings = self.positional_encoding_layer(positional_tensor) # (T, Re)
         transformer_input = token_embeddings + positional_embeddings # (B, T, Re)
         transformer_output = transformer_input
