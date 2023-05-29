@@ -32,7 +32,7 @@ num_decoder_blocks = 10
 # Training hyperparameters.
 max_block_size = 24
 batch_size = 32
-num_batches_to_train = 500
+num_batches_to_train = 200
 
 # Evaluation hyperparameters.
 num_batches_to_evaluate = 10
@@ -62,9 +62,12 @@ val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size, shuffle = 
 model = GPT(num_decoder_blocks, tokenizer.vocabulary_length(), embedding_dimension, num_heads, head_dimension, max_block_size)
 num_model_parameters = layer_utils.num_parameters(model, output_params_path)
 print(f'Number of parameters in the model is {num_model_parameters["total_trainable_parameters"]}.')
-
 optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
 evaluator = Evaluator()
+
+# Set device for training.
+device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
+model.to(device)
 
 # Perform model training and evaluation.
 for (batch_index, train_batch) in enumerate(train_dataloader):
@@ -73,8 +76,8 @@ for (batch_index, train_batch) in enumerate(train_dataloader):
         torch.save(model.state_dict(), output_model_path)
         break
 
-    train_features = train_batch['features']
-    train_labels = train_batch['labels']
+    train_features = train_batch['features'].to(device)
+    train_labels = train_batch['labels'].to(device)
     predictions, loss = model(train_features, train_labels)
 
     optimizer.zero_grad()
@@ -82,6 +85,6 @@ for (batch_index, train_batch) in enumerate(train_dataloader):
     optimizer.step()
 
     if batch_index % num_batches_between_evaluations == 0:
-        (train_loss, val_loss) = evaluator.evaluate_train_and_validation_loss(train_dataloader, val_dataloader, model, num_batches_to_evaluate)
-        generated_text = evaluator.generate_text(model, num_tokens_to_generate_during_evaluation, tokenizer)
+        (train_loss, val_loss) = evaluator.evaluate_train_and_validation_loss(train_dataloader, val_dataloader, model, num_batches_to_evaluate, device)
+        generated_text = evaluator.generate_text(model, num_tokens_to_generate_during_evaluation, tokenizer, device)
         print(f' Batch index: {batch_index}, train loss: {train_loss}, val_loss: {val_loss}, generated text\n {generated_text}')
