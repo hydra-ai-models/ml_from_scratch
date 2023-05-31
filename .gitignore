@@ -1,6 +1,8 @@
 # Gitignore patterns below are obtained from https://github.com/github/gitignore/blob/main/Python.gitignore
 
-# Code in this repository store output in output directory. Hence ignore it too.
+# Code in this repository store logs in logs directory, and output in output directory.
+# Hence ignore these directories.
+logs/
 output/
 
 # Byte-compiled / optimized / DLL files
