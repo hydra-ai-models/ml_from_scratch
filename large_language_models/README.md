@@ -7,7 +7,10 @@
 
 ## Getting started
 
-### Setting up the dev environment.
+### Setting up the dev environment for large language models.
+
+Clone this repository and navigate to the `large_language_models` directory.
+
 #### On Mac
 Note that only small models with around 500k parameters can be trained on Mac due to limited memory and lack of GPUs. This is still a good step to do for prototyping architecture implementations on small datasets.
 
