@@ -17,8 +17,15 @@ from evaluate import Evaluator
 from collections.abc import Callable
 import torch, torch.nn as nn
 
-def train():
-    # Main function for launching the training job.
+def train(device: str = None):
+    '''
+        Function to train the LLM model.
+
+        Args:
+            1. device - Optional device to run the training. If not specified, training
+                will be run automatically on the device set by accelerate.device.
+
+    '''
 
     # Define hyperparameters.
 
@@ -67,7 +74,7 @@ def train():
     # Define the model architecture and optimizer.
     model = GPT(num_decoder_blocks, tokenizer.vocabulary_length(), embedding_dimension, num_heads, head_dimension, max_block_size)
     num_model_parameters = layer_utils.num_parameters(model, output_params_path)
-    print(f'Number of parameters in the model is {num_model_parameters["total_trainable_parameters"]}.')
+    #print(f'Number of parameters in the model is {num_model_parameters["total_trainable_parameters"]}.')
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma = 0.5)
@@ -76,33 +83,43 @@ def train():
     # Defining HF accelerator.
     from accelerate import Accelerator
     accelerator = Accelerator()
-    device = accelerator.device
-    print(f'Running training and evaluation on device {device}.')
+    if not device:
+        device = accelerator.device
+    #print(f'Running training and evaluation on device {device}.')
 
     (model, optimizer, train_dataloader, scheduler) = accelerator.prepare(model, optimizer, train_dataloader, scheduler)
     model.to(device)
 
     # Perform model training and evaluation.
-    for (batch_index, train_batch) in enumerate(train_dataloader):
-        if batch_index > num_batches_to_train:
-            print('Reached maximum number of matches. Training is now complete.')
-            torch.save(model.state_dict(), output_model_path)
-            break
 
-        train_features = train_batch['features'].to(device)
-        train_labels = train_batch['labels'].to(device)
-        predictions, loss = model(train_features, train_labels)
+    with torch.profiler.profile(
+        schedule=torch.profiler.schedule(wait=1, warmup=1, active=5, repeat=2),
+        on_trace_ready=torch.profiler.tensorboard_trace_handler('./log/gpt_pretraining'),
+        record_shapes=True,
+        profile_memory=True,
+        with_stack=True
+    ) as profiler:
+        for (batch_index, train_batch) in enumerate(train_dataloader):
+            if batch_index > num_batches_to_train:
+                #print('Reached maximum number of matches. Training is now complete.')
+                torch.save(model.state_dict(), output_model_path)
+                break
 
-        # Note that making the gradients zero is not needed with the accelerator, as it will take care of this.
-        #optimizer.zero_grad()
-        #loss.backward()
-        accelerator.backward(loss)
-        optimizer.step()
+            train_features = train_batch['features'].to(device)
+            train_labels = train_batch['labels'].to(device)
+            predictions, loss = model(train_features, train_labels)
 
-        if batch_index % num_batches_between_evaluations == 0:
-            (train_loss, val_loss) = evaluator.evaluate_train_and_validation_loss(train_dataloader, val_dataloader, model, num_batches_to_evaluate, device)
-            generated_text = evaluator.generate_text(model, num_tokens_to_generate_during_evaluation, tokenizer, device)
-            print(f' Batch index: {batch_index}, train loss: {train_loss}, val_loss: {val_loss}, generated text\n {generated_text}')
+            # Note that making the gradients zero is not needed with the accelerator, as it will take care of this.
+            #optimizer.zero_grad()
+            #loss.backward()
+            accelerator.backward(loss)
+            optimizer.step()
+            profiler.step()
+
+            if batch_index % num_batches_between_evaluations == 0:
+                (train_loss, val_loss) = evaluator.evaluate_train_and_validation_loss(train_dataloader, val_dataloader, model, num_batches_to_evaluate, device)
+                generated_text = evaluator.generate_text(model, num_tokens_to_generate_during_evaluation, tokenizer, device)
+                #print(f' Batch index: {batch_index}, train loss: {train_loss}, val_loss: {val_loss}, generated text\n {generated_text}')
 
 if __name__ == '__main__':
     train()

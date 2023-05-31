@@ -2,3 +2,4 @@ accelerate
 notebook
 pyyaml
 torch
+torch_tb_profiler # Tensorboard profiler
