@@ -15,7 +15,7 @@ like LoRA finetuning, distillation and RLHF alignment.
 2. [Finetuning of GPT models using LoRA](https://arxiv.org/abs/2106.09685).
 
 ### Diffusion Models
-1. [Latest diffusion models](https://arxiv.org/abs/2112.10752)
+1. [Latest diffusion models](https://arxiv.org/abs/2112.10752).
 
 ## Disclaimer
 

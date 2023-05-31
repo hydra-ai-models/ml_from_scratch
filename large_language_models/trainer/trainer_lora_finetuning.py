@@ -1,5 +1,5 @@
 # Trainer script for LoRA finetuning of GPT models.
-# Move to the repo directory with the README file. Now, run this script using
+# Move to the large_language_models directory. Now, run this script using
 #   python -m trainer.trainer_lora_finetuning
 
 import os
