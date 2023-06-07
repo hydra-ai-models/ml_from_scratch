@@ -1,7 +1,7 @@
 # Diffusion Models
 
 <p align="center">
-  <img src="docs/images/readme_image.png" width=50%/>
+  <img src="docs/images/image_diffusion_models.jpeg" width=50%/>
 </p>
 
 
