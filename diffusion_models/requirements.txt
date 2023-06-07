@@ -1,0 +1,11 @@
+accelerate
+dataclasses
+datasets
+diffusers
+huggingface_hub
+notebook
+pillow
+pyyaml
+torch
+torchvision
+transformers
