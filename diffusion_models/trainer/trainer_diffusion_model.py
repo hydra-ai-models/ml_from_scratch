@@ -1,3 +1,7 @@
+# Trainer script for training image diffusion models.
+# Move to the diffusion_models directory. Now, run this script using
+#   python -m trainer.trainer_diffusion_models
+
 from PIL import Image
 from datasets import load_dataset
 from dataset_utils.dataset_utils import verify_columns, visualize_dataset, preprocess_dataset, collate_fn
